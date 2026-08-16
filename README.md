@@ -2,7 +2,7 @@
 
 A clean and intuitive invoice generator web app that helps you create, manage, and download professional invoices with ease.
 
-🔗 **Live Demo:** [invocraftt.netlify.app](https://invocraft.netlify.app)
+🔗 **Live Demo:** [invocraftt.netlify.app](https://invocraftt.netlify.app/)
 
 ## ✨ Features
 
