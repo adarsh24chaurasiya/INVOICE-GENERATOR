@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INVOCRAFT — Invoice Generator</title>
+<title>INVOCRAFT — Modern Invoice Generator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -21,6 +21,12 @@
     </span>
     INVOCRAFT
   </div>
+  <div class="topbar-actions">
+    <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle Theme">
+      <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
 </header>
 
 <main class="layout">
@@ -33,7 +39,7 @@
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="num-badge">1</span>Business</div>
+      <div class="section-title"><span class="num-badge">1</span>Business Details</div>
       <div class="field"><label>Business name<span class="req">*</span></label><input type="text" id="fromName" placeholder="Acme Studio"></div>
       <div class="field"><label>Address &amp; contact<span class="req">*</span></label><textarea id="fromInfo" placeholder="123 Market St, San Francisco, CA&#10;hello@acme.com"></textarea></div>
       <div class="grid two">
@@ -43,45 +49,65 @@
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="num-badge">2</span>Client</div>
+      <div class="section-title"><span class="num-badge">2</span>Client Details</div>
       <div class="field"><label>Client name<span class="req">*</span></label><input type="text" id="toName" placeholder="Client Name"></div>
       <div class="field"><label>Address &amp; contact<span class="req">*</span></label><textarea id="toInfo" placeholder="456 Client Ave, New York, NY&#10;client@email.com"></textarea></div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="num-badge">3</span>Details</div>
+      <div class="section-title"><span class="num-badge">3</span>Invoice Details</div>
       <div class="grid three">
-        <div class="field"><label>Invoice #<span class="req">*</span></label><input type="text" id="invoiceNumber" placeholder="INV-0001"></div>
-        <div class="field"><label>Date<span class="req">*</span></label><input type="date" id="invoiceDate"></div>
-        <div class="field"><label>Due date<span class="req">*</span></label><input type="date" id="dueDate"></div>
+        <div class="field">
+          <label>Invoice #<span class="req">*</span></label>
+          <div class="input-with-action">
+            <input type="text" id="invoiceNumber" placeholder="INV-0001">
+            <button type="button" id="autoInvNumberBtn" title="Auto-generate number" class="inner-btn">Auto</button>
+          </div>
+        </div>
+        <div class="field"><label>Issue Date<span class="req">*</span></label><input type="date" id="invoiceDate"></div>
+        <div class="field"><label>Due Date<span class="req">*</span></label><input type="date" id="dueDate"></div>
       </div>
-      <div class="grid two">
+      <div class="grid three">
         <div class="field">
           <label>Currency</label>
           <select id="currency">
-            <option value="$">USD $</option>
-            <option value="€">EUR €</option>
-            <option value="₹">INR ₹</option>
-            
+            <option value="$">USD ($)</option>
+            <option value="€">EUR (€)</option>
+            <option value="£">GBP (£)</option>
+            <option value="₹">INR (₹)</option>
+            <option value="¥">JPY (¥)</option>
+            <option value="CA$">CAD ($)</option>
+            <option value="A$">AUD ($)</option>
           </select>
         </div>
-        <div class="field"><label>Tax rate (%)</label><input type="number" id="taxRate" value="0" min="0" step="0.01"></div>
+        <div class="field"><label>Tax Rate (%)</label><input type="number" id="taxRate" value="0" min="0" step="0.01"></div>
+        <div class="field"><label>Discount (%)</label><input type="number" id="discountRate" value="0" min="0" step="0.01"></div>
+      </div>
+      <div class="grid two">
+        <div class="field">
+          <label>Payment Status</label>
+          <select id="paymentStatus">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Overdue">Overdue</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="num-badge">4</span>Items</div>
+      <div class="section-title"><span class="num-badge">4</span>Line Items</div>
       <div class="items-list" id="itemsBody"></div>
       <button id="addItemBtn" class="btn-outline">+ Add item</button>
     </div>
 
     <div class="section">
-      <div class="section-title"><span class="num-badge">5</span>Notes &amp; Payment</div>
-      <div class="field"><label>Notes</label><textarea id="notes" placeholder="Payment terms, thank-you note…"></textarea></div>
+      <div class="section-title"><span class="num-badge">5</span>Notes &amp; Payment Info</div>
+      <div class="field"><label>Notes &amp; Terms</label><textarea id="notes" placeholder="Payment terms, thank-you note, delivery details…"></textarea></div>
       <div class="field"><label>Bank name <em>optional</em></label><input type="text" id="bankName" placeholder="Bank name"></div>
       <div class="grid two">
         <div class="field"><label>Account number<span class="req">*</span></label><input type="text" id="accountNumber" placeholder="e.g. 123456789012"></div>
-        <div class="field"><label>IFSC code<span class="req">*</span></label><input type="text" id="ifscCode" placeholder="e.g. SBIN0001234"></div>
+        <div class="field"><label>IFSC / SWIFT code<span class="req">*</span></label><input type="text" id="ifscCode" placeholder="e.g. SBIN0001234"></div>
       </div>
     </div>
 
@@ -94,8 +120,16 @@
 
   <section class="invoices-col">
     <div class="invoices-heading" id="invoicesHeading">
-      <h2>Your Invoices</h2>
-      <span id="invoiceCount" class="count-pill">0</span>
+      <div class="heading-left">
+        <h2>Your Invoices</h2>
+        <span id="invoiceCount" class="count-pill">0</span>
+      </div>
+      <div class="heading-right">
+        <button id="exportCsvBtn" class="btn-outline-sm" title="Export Invoices as CSV">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
     </div>
     <div id="emptyState" class="empty-state">
       <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l5 5v13H6z"/><path d="M15 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
@@ -111,7 +145,7 @@
   New Invoice
 </button>
 
-<div class="toast" id="toast">PDF downloaded</div>
+<div class="toast" id="toast">Invoice generated</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="script.js"></script>
