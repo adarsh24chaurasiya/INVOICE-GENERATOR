@@ -3,6 +3,8 @@ let idCounter = 0;
 let currency = "$";
 let invoices = [];
 let editingId = null;
+let currentFilter = "all";
+let searchQuery = "";
 
 function initTheme() {
   const savedTheme = localStorage.getItem("invocraft_theme") || "light";
@@ -86,6 +88,38 @@ function formatDate(str) {
   return isNaN(d.getTime()) ? str : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
+function calculateInvoiceTotal(inv) {
+  const subtotal = (inv.items || []).reduce((s, i) => s + (Number(i.qty) * Number(i.price)), 0);
+  const discountRate = parseFloat(inv.discountRate) || 0;
+  const discountAmount = subtotal * (discountRate / 100);
+  const taxableAmount = Math.max(0, subtotal - discountAmount);
+  const taxRate = parseFloat(inv.taxRate) || 0;
+  const taxAmount = taxableAmount * (taxRate / 100);
+  return taxableAmount + taxAmount;
+}
+
+function updateAnalytics() {
+  const primaryCurrency = invoices.length > 0 ? (invoices[0].currency || "$") : "$";
+  let totalInvoiced = 0;
+  let totalPaid = 0;
+  let totalPending = 0;
+
+  invoices.forEach(inv => {
+    const total = calculateInvoiceTotal(inv);
+    totalInvoiced += total;
+    const status = (inv.paymentStatus || "Pending").toLowerCase();
+    if (status === "paid") {
+      totalPaid += total;
+    } else {
+      totalPending += total;
+    }
+  });
+
+  document.getElementById("statTotalInvoiced").textContent = primaryCurrency + totalInvoiced.toFixed(2);
+  document.getElementById("statTotalPaid").textContent = primaryCurrency + totalPaid.toFixed(2);
+  document.getElementById("statTotalPending").textContent = primaryCurrency + totalPending.toFixed(2);
+}
+
 function gatherFormData() {
   return {
     fromName: document.getElementById("fromName").value,
@@ -152,6 +186,21 @@ function fillForm(data) {
   items = [];
   idCounter = 0;
   (data.items || []).forEach(i => addItem(i.desc, i.qty, i.price));
+}
+
+function duplicateInvoice(id) {
+  const original = invoices.find(i => i.id === id);
+  if (!original) return;
+  const clone = JSON.parse(JSON.stringify(original));
+  clone.id = "inv_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  clone.invoiceNumber = generateInvoiceNumber();
+  clone.invoiceDate = new Date().toISOString().split("T")[0];
+  clone.paymentStatus = "Pending";
+  invoices.push(clone);
+  saveInvoices();
+  updateAnalytics();
+  renderInvoiceList();
+  showToast("Invoice duplicated");
 }
 
 function invoiceSheetHtml(data, uid) {
@@ -224,16 +273,44 @@ function invoiceSheetHtml(data, uid) {
 function renderInvoiceList() {
   const list = document.getElementById("invoiceList");
   const empty = document.getElementById("emptyState");
+  const emptyText = document.getElementById("emptyStateText");
   document.getElementById("invoiceCount").textContent = invoices.length;
-  empty.style.display = invoices.length ? "none" : "block";
+
+  let filtered = invoices.slice().reverse();
+
+  if (currentFilter !== "all") {
+    filtered = filtered.filter(inv => (inv.paymentStatus || "Pending").toLowerCase() === currentFilter.toLowerCase());
+  }
+
+  if (searchQuery.trim()) {
+    const q = searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(inv => {
+      const invNum = (inv.invoiceNumber || "").toLowerCase();
+      const from = (inv.fromName || "").toLowerCase();
+      const to = (inv.toName || "").toLowerCase();
+      return invNum.includes(q) || from.includes(q) || to.includes(q);
+    });
+  }
+
+  if (invoices.length === 0) {
+    empty.style.display = "block";
+    emptyText.textContent = "No invoices generated yet";
+  } else if (filtered.length === 0) {
+    empty.style.display = "block";
+    emptyText.textContent = "No invoices match your search or filter";
+  } else {
+    empty.style.display = "none";
+  }
+
   list.innerHTML = "";
 
-  invoices.slice().reverse().forEach(inv => {
+  filtered.forEach(inv => {
     const block = document.createElement("div");
     block.className = "invoice-block";
     block.innerHTML = `
       <div class="invoice-actions">
         <button class="btn-outline editInvBtn" data-id="${inv.id}">Edit</button>
+        <button class="btn-outline duplicateInvBtn" data-id="${inv.id}">Duplicate</button>
         <button class="btn-gradient downloadInvBtn" data-id="${inv.id}">Download PDF</button>
         <button class="btn-outline printInvBtn" data-id="${inv.id}">Print</button>
         <button class="btn-danger deleteInvBtn" data-id="${inv.id}">Delete</button>
@@ -255,10 +332,15 @@ function renderInvoiceList() {
     });
   });
 
+  list.querySelectorAll(".duplicateInvBtn").forEach(btn => {
+    btn.addEventListener("click", () => duplicateInvoice(btn.dataset.id));
+  });
+
   list.querySelectorAll(".deleteInvBtn").forEach(btn => {
     btn.addEventListener("click", () => {
       invoices = invoices.filter(i => i.id !== btn.dataset.id);
       saveInvoices();
+      updateAnalytics();
       renderInvoiceList();
       showToast("Invoice deleted");
     });
@@ -284,7 +366,6 @@ function renderInvoiceList() {
       const sheet = document.getElementById("sheet-" + btn.dataset.id);
       if (!sheet) return;
       const printWindow = window.open("", "_blank");
-      const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -415,6 +496,7 @@ document.getElementById("generateBtn").addEventListener("click", () => {
     showToast("Invoice generated");
   }
   saveInvoices();
+  updateAnalytics();
   renderInvoiceList();
   resetForm();
 });
@@ -438,6 +520,20 @@ document.getElementById("themeToggleBtn").addEventListener("click", toggleTheme)
 
 document.getElementById("exportCsvBtn").addEventListener("click", exportToCSV);
 
+document.getElementById("invoiceSearchInput").addEventListener("input", e => {
+  searchQuery = e.target.value;
+  renderInvoiceList();
+});
+
+document.querySelectorAll(".filter-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".filter-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentFilter = tab.dataset.filter;
+    renderInvoiceList();
+  });
+});
+
 document.querySelectorAll("#formSection input, #formSection textarea, #formSection select").forEach(el => {
   el.addEventListener("input", () => el.classList.remove("invalid"));
 });
@@ -454,5 +550,6 @@ window.addEventListener("scroll", () => {
 
 initTheme();
 loadInvoices();
+updateAnalytics();
 renderInvoiceList();
 resetForm();

@@ -131,9 +131,53 @@
         </button>
       </div>
     </div>
+
+    <div id="analyticsSection" class="analytics-grid">
+      <div class="stat-card stat-total">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Total Invoiced</span>
+          <span class="stat-value" id="statTotalInvoiced">$0.00</span>
+        </div>
+      </div>
+      <div class="stat-card stat-paid">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Total Collected</span>
+          <span class="stat-value" id="statTotalPaid">$0.00</span>
+        </div>
+      </div>
+      <div class="stat-card stat-pending">
+        <div class="stat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Outstanding</span>
+          <span class="stat-value" id="statTotalPending">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-controls">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="invoiceSearchInput" placeholder="Search by client, invoice #, business…">
+      </div>
+      <div class="filter-tabs" id="filterTabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="Paid">Paid</button>
+        <button class="filter-tab" data-filter="Pending">Pending</button>
+        <button class="filter-tab" data-filter="Overdue">Overdue</button>
+      </div>
+    </div>
+
     <div id="emptyState" class="empty-state">
       <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h9l5 5v13H6z"/><path d="M15 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
-      <p>No invoices generated yet</p>
+      <p id="emptyStateText">No invoices generated yet</p>
     </div>
     <div id="invoiceList" class="invoice-list"></div>
   </section>
